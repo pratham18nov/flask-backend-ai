@@ -14,6 +14,7 @@ CORS(app)
 # === Load Model and Captions Once ===
 processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+
 captions_df = pd.read_csv("model/social_media_captions_400.csv")
 candidate_captions = captions_df['Caption'].tolist()
 
@@ -33,7 +34,7 @@ def match_captions(image_features):
         text=candidate_captions,
         return_tensors="pt",
         padding=True,
-        truncation=True  # Fixes long caption error
+        truncation=True
     )
     with torch.no_grad():
         text_features = clip_model.get_text_features(**text_inputs)
@@ -49,7 +50,7 @@ def match_captions(image_features):
 
     return best_captions[:5], best_similarities[:5]
 
-#  Paste the API Route BELOW This Line ===
+# === API Route ===
 @app.route("/api/match", methods=["POST"])
 def api_match():
     if 'image' not in request.files:
@@ -70,8 +71,9 @@ def api_match():
 
 @app.route("/")
 def home():
-    return " PicLingo Flask backend is running!"
+    return "✅ PicLingo Flask backend is running!"
 
-# === Run the Flask App ===
+# === Run the Flask App (with dynamic port for Render/Railway) ===
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # IMPORTANT for Render/Railway
+    app.run(host="0.0.0.0", port=port, debug=False)
